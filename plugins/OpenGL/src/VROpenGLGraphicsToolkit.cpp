@@ -1,7 +1,7 @@
 
 #include "VROpenGLGraphicsToolkit.h"
 #include "VROpenGLHeaders.h"
-
+ 
 namespace MinVR {
 
 VROpenGLGraphicsToolkit::VROpenGLGraphicsToolkit() {
