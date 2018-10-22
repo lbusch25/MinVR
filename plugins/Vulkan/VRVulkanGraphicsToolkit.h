@@ -63,6 +63,37 @@ namespace MinVR {
 		};
 
 	private:
+		VkInstance INSTANCE_DEFAULT;
+		VkDebugUtilsMessengerEXT CALLBACK_DEFAULT;
+		VkSurfaceKHR surface;
+
+		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+		VkDevice device;
+
+		VkQueue graphicsQueue;
+		VkQueue presentQueue;
+
+		VkSwapchainKHR swapChain;
+		std::vector<VkImage> swapChainImages;
+		VkFormat swapChainImageFormat;
+		VkExtent2D swapChainExtent;
+		std::vector<VkImageView> swapChainImageViews;
+		std::vector<VkFramebuffer> swapChainFramebuffers;
+
+		VkRenderPass renderPass;
+		VkPipelineLayout pipelineLayout;
+		VkPipeline graphicsPipeline;
+
+		VkCommandPool commandPool;
+		std::vector<VkCommandBuffer> commandBuffers;
+
+		std::vector<VkSemaphore> imageAvailableSemaphores;
+		std::vector<VkSemaphore> renderFinishedSemaphores;
+		std::vector<VkFence> inFlightFences;
+		size_t currentFrame = 0;
+
+		bool framebufferResized = false;
+
 		// init stuff
 		void createInstance();
 		void setupDebugCallback();
@@ -79,10 +110,16 @@ namespace MinVR {
 		void createCommandBuffers();
 		void createSyncObjects();
 
-		void setUpValidationLayers();
+		//Validation layer setup
+		//void setUpValidationLayers();
+		bool checkValidationLayerSupport();
+		std::vector<const char*> getRequiredExtensions();
+		void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT callback, const VkAllocationCallbacks* pAllocator);
+		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+		VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pCallback)
 
 		//swapChain recreation
-		void cleanupSwapChain();
+		void cleanUpSwapChain();
 	};
 }
 
