@@ -120,6 +120,7 @@ VRDisplayNode* VRGraphicsWindowNode::create(VRMainInterface *vrMain, VRDataIndex
   settings.gpuAffinity = int(config->getValueWithDefault("UseGPUAffinity", 1, nameSpace));
   settings.debugContext = int(config->getValueWithDefault("UseDebugContext", 0, nameSpace));
   settings.msaaSamples = int(config->getValueWithDefault("MSAASamples", 0, nameSpace));
+  settings.Vulkan = int(config->getValueWithDefault("Vulkan", 0, nameSpace));
 
   //  std::cout << "Window corners: " << settings.xpos << ", " << settings.ypos << ", " << settings.width << ", " << settings.height << std::endl;
 

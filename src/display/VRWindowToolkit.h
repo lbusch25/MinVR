@@ -39,6 +39,7 @@ public:
  	bool gpuAffinity;
  	bool debugContext;
  	int msaaSamples;
+	bool Vulkan;
 
 // 	Window1_Height          1300
 // 	Window1_X               1681

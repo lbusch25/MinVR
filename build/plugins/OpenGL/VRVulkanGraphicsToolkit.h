@@ -6,6 +6,7 @@
 #include <main/VRFactory.h>
 #include <plugin/VRPlugin.h>
 #include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 #include <optional>
 
 namespace MinVR {

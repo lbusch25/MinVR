@@ -45,7 +45,7 @@ VRGLFWWindowToolkit::~VRGLFWWindowToolkit() {
 
 int
 VRGLFWWindowToolkit::createWindow(VRWindowSettings settings) {
-    glfwDefaultWindowHints();
+	glfwDefaultWindowHints();
 
 	glfwWindowHint(GLFW_ALPHA_BITS, settings.alphaBits);
 	glfwWindowHint(GLFW_DEPTH_BITS, settings.depthBits);
@@ -66,19 +66,19 @@ VRGLFWWindowToolkit::createWindow(VRWindowSettings settings) {
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	}
 
-    if (settings.quadBuffered) {
-  		glfwWindowHint(GLFW_STEREO, true);
-    }
+	if (settings.quadBuffered) {
+		glfwWindowHint(GLFW_STEREO, true);
+	}
 
-    GLFWwindow* sharedContext = NULL;
-    bool foundSharedContextGroup = false;
-    if (settings.sharedContextGroupID >= 0) {
-    	std::map<int, GLFWwindow*>::iterator it = _sharedContextGroups.find(settings.sharedContextGroupID);
-    	if (it != _sharedContextGroups.end()) {
-    		foundSharedContextGroup = true;
-    		sharedContext = it->second;
-    	}
-    }
+	GLFWwindow* sharedContext = NULL;
+	bool foundSharedContextGroup = false;
+	if (settings.sharedContextGroupID >= 0) {
+		std::map<int, GLFWwindow*>::iterator it = _sharedContextGroups.find(settings.sharedContextGroupID);
+		if (it != _sharedContextGroups.end()) {
+			foundSharedContextGroup = true;
+			sharedContext = it->second;
+		}
+	}
 
 #ifdef _MSC_VER
 
@@ -141,8 +141,15 @@ VRGLFWWindowToolkit::createWindow(VRWindowSettings settings) {
 		}
 	}
 #endif
-
-	GLFWwindow* window = glfwCreateWindow(settings.width, settings.height, settings.caption.c_str(), NULL, sharedContext);
+	GLFWwindow* window;
+	if (settings.Vulkan) {
+		//glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); GLFW_NO_API not found? defined as 0 in GLFW so using that
+		glfwWindowHint(GLFW_CLIENT_API, 0);
+		window = glfwCreateWindow(settings.width, settings.height, settings.caption.c_str(), nullptr, sharedContext);
+	}
+	else {
+		window = glfwCreateWindow(settings.width, settings.height, settings.caption.c_str(), NULL, sharedContext);
+	}
 	if (!window) {
 		std::cout << "Error creating window." << std::endl;
 	}

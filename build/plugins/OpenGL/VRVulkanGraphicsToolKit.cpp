@@ -5,11 +5,27 @@
 
 namespace MinVR {
 
+	/*
+	* This section is all functions needed to make the API work with MinVR. 
+	* The flush/finish graphics functions will have to do with Vulkan pipeline implementataions.
+	*/
 	VRVulkanGraphicsToolkit::VRVulkanGraphicsToolkit() {
 
 	}
 
 	VRVulkanGraphicsToolkit::~VRVulkanGraphicsToolkit() {
+
+	}
+
+	void VRVulkanGraphicsToolkit::setSubWindow(VRRect rect) {
+
+	}
+
+	void VRVulkanGraphicsToolkit::flushGraphics() {
+
+	}
+
+	void VRVulkanGraphicsToolkit::finishGraphics() {
 
 	}
 
@@ -19,4 +35,6 @@ namespace MinVR {
 		return gfxToolkit;
 	}
 	
+
+
 }
