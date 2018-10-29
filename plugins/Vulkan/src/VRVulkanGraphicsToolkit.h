@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 #include <optional>
+#include <algorithm>
 
 namespace MinVR {
 	/** Vulkan Implementation for the MinVR VRGraphicsToolkit abstraction.
@@ -21,7 +22,7 @@ namespace MinVR {
 		PLUGIN_API std::string getName() const { return "VRVulkanGraphicsToolkit"; }
 
 		//Stuff needed to set up vulkan
-		PLUGIN_API void initVulkan();
+		PLUGIN_API void initVulkan(GLFWwindow* window);
 		PLUGIN_API void cleanUpVulkan();
 		PLUGIN_API void recreateSwapChain();
 
@@ -40,13 +41,6 @@ namespace MinVR {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 
-#ifdef MinVR_DEBUG
-		const bool enableValidationLayers = false;
-#else
-		const bool enableValidationLayers = true;
-#endif
-
-		//Might want to make these classes for multiple swap chains
 		struct SwapChainSupportDetails {
 			VkSurfaceCapabilitiesKHR capabilities;
 			std::vector<VkSurfaceFormatKHR> formats;
@@ -62,22 +56,31 @@ namespace MinVR {
 			}
 		};
 
+#ifdef MinVR_DEBUG
+		const bool enableValidationLayers = false;
+#else
+		const bool enableValidationLayers = true;
+#endif
+
 	private:
+		VRInt HEIGHT;
+		VRInt WIDTH;
+
 		VkInstance INSTANCE_DEFAULT;
 		VkDebugUtilsMessengerEXT CALLBACK_DEFAULT;
-		VkSurfaceKHR surface;
+		VkSurfaceKHR SURFACE_DEFAULT;
 
-		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-		VkDevice device;
+		VkPhysicalDevice PHYSICAL_DEVICE_DEFAULT = VK_NULL_HANDLE;
+		VkDevice DEVICE_DEFAULT;
 
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
+		VkQueue GRAPHICS_QUEUE_DEFAULT;
+		VkQueue PRESENT_QUEUE_DEFAULT;
 
-		VkSwapchainKHR swapChain;
-		std::vector<VkImage> swapChainImages;
-		VkFormat swapChainImageFormat;
-		VkExtent2D swapChainExtent;
-		std::vector<VkImageView> swapChainImageViews;
+		VkSwapchainKHR SWAP_CHAIN_DEFAULT;
+		std::vector<VkImage> SWAP_CHAIN_IMAGES;
+		VkFormat SWAP_CHAIN_IMAGE_FORMAT_DEFAULT;
+		VkExtent2D SWAP_CHAIN_EXTENT_DEFAULT;
+		std::vector<VkImageView> SWAP_CHAIN_IMAGE_VIEWS;
 		std::vector<VkFramebuffer> swapChainFramebuffers;
 
 		VkRenderPass renderPass;
@@ -97,7 +100,7 @@ namespace MinVR {
 		// init stuff
 		void createInstance();
 		void setupDebugCallback();
-		void createSurface();
+		void createSurface(GLFWwindow* window);
 		void pickPhysicalDevice();
 		void createLogicalDevice();
 		// swap chain stuff
@@ -124,6 +127,18 @@ namespace MinVR {
 
 		//swapChain recreation
 		void cleanUpSwapChain();
+
+		//Various helper functions
+		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+		bool isDeviceSuitable(VkPhysicalDevice device);
+		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
+		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height);
+
+		void setWindowWidth(VRInt width);
+		void setWindwoHeight(VRInt height);
 	};
 }
 
