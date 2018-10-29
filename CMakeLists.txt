@@ -398,6 +398,14 @@ minvr_optional_adddir(
   "plugins/Scalable"
 )
 
+#---- OpenGL Plugin ----
+minvr_optional_adddir(
+  WITH_PLUGIN_VULKAN
+  "Vulkan Plugin"
+  "(Requires Vulkan to be pre-installed)"
+  "plugins/Vulkan"
+)
+
 
 # ---- Plugins that Provide a Window Toolkit ----
 # Save a list of plugins that provide a window toolkit so that we can error out
