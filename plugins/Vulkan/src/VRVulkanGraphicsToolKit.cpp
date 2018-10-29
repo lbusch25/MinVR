@@ -199,12 +199,6 @@ namespace MinVR {
 		return true;
 	}
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL VRVulkanGraphicsToolkit::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
-		return VK_FALSE;
-	}
-
 	void VRVulkanGraphicsToolkit::setupDebugCallback() {
 		if (!enableValidationLayers) return;
 
@@ -214,7 +208,7 @@ namespace MinVR {
 		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		createInfo.pfnUserCallback = debugCallback;
 
-		if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &callback) != VK_SUCCESS) {
+		if (CreateDebugUtilsMessengerEXT(INSTANCE_DEFAULT, &createInfo, nullptr, &CALLBACK_DEFAULT) != VK_SUCCESS) {
 			throw std::runtime_error("failed to set up debug callback!");
 		}
 	}

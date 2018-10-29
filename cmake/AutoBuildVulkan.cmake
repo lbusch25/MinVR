@@ -16,11 +16,11 @@
 #
 macro(AutoBuild_use_package_Vulkan YOUR_TARGET INTERFACE_PUBLIC_OR_PRIVATE)
 
-    message(STATUS "AutoBuild: Searching for package OpenGL...")
+    message(STATUS "AutoBuild: Searching for package Vulkan...")
 
 	# Check to see if the library is already installed on the system    
-    # CMake ships with FindOpenGL.cmake and in CMake 3.9+ it defines
-    # the imported targets OpenGL::GL and OpenGL::GLU.  Using these is
+    # CMake ships with FindVulkan.cmake and in CMake 3.9+ it defines
+    # the imported target Vulkan::Vulkan.  Using this is
     # now the preferred way to link with OpenGL and all of its dependencies.
 	# See https://cmake.org/cmake/help/v3.7/module/FindVulkan.html
 	find_package(Vulkan)
