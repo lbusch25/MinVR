@@ -75,6 +75,10 @@ namespace MinVR {
 	}
 
 	void VRVulkanGraphicsToolkit::cleanUpVulkan() {
+		for (auto framebuffer : SWAP_CHAIN_FRAME_BUFFERS_DEFAULT) {
+			vkDestroyFramebuffer(DEVICE_DEFAULT, framebuffer, nullptr);
+		}
+
 		vkDestroyPipeline(DEVICE_DEFAULT, GRAPHICS_PIPELINE_DEFAULT, nullptr);
 		vkDestroyPipelineLayout(DEVICE_DEFAULT, PIPELINE_LAYOUT_DEFAULT, nullptr);
 		vkDestroyRenderPass(DEVICE_DEFAULT, RENDER_PASS_DEFAULT, nullptr);
@@ -437,15 +441,87 @@ namespace MinVR {
 	}
 
 	void VRVulkanGraphicsToolkit::createFramebuffers() {
+		SWAP_CHAIN_FRAME_BUFFERS_DEFAULT.resize(SWAP_CHAIN_IMAGE_VIEWS.size());
 
+		for (size_t i = 0; i < SWAP_CHAIN_IMAGE_VIEWS.size(); i++) {
+			VkImageView attachments[] = {
+				SWAP_CHAIN_IMAGE_VIEWS[i]
+			};
+
+			VkFramebufferCreateInfo framebufferInfo = {};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = RENDER_PASS_DEFAULT;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = SWAP_CHAIN_EXTENT_DEFAULT.width;
+			framebufferInfo.height = SWAP_CHAIN_EXTENT_DEFAULT.height;
+			framebufferInfo.layers = 1;
+
+			if (vkCreateFramebuffer(DEVICE_DEFAULT, &framebufferInfo, nullptr, &SWAP_CHAIN_FRAME_BUFFERS_DEFAULT[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create framebuffer!");
+			}
+		}
 	}
 
-	void VRVulkanGraphicsToolkit::createCommandPool() {
 
+
+	void VRVulkanGraphicsToolkit::createCommandPool() {
+		QueueFamilyIndices queueFamilyIndices = findQueueFamilies(PHYSICAL_DEVICE_DEFAULT);
+
+		VkCommandPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+		if (vkCreateCommandPool(DEVICE_DEFAULT, &poolInfo, nullptr, &COMMAND_POOL) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create command pool!");
+		}
 	}
 
 	void VRVulkanGraphicsToolkit::createCommandBuffers() {
+		COMMAND_BUFFERS.resize(SWAP_CHAIN_FRAME_BUFFERS_DEFAULT.size());
 
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = COMMAND_POOL;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = (uint32_t)COMMAND_BUFFERS.size();
+
+		if (vkAllocateCommandBuffers(DEVICE_DEFAULT, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate command buffers!");
+		}
+
+		for (size_t i = 0; i < commandBuffers.size(); i++) {
+			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+			if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+				throw std::runtime_error("failed to begin recording command buffer!");
+			}
+
+			VkRenderPassBeginInfo renderPassInfo = {};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = RENDER_PASS_DEFAULT;
+			renderPassInfo.framebuffer = SWAP_CHAIN_FRAME_BUFFERS_DEFAULT[i];
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = SWAP_CHAIN_EXTENT_DEFAULT;
+
+			VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+			renderPassInfo.clearValueCount = 1;
+			renderPassInfo.pClearValues = &clearColor;
+
+			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, GRAPHICS_PIPELINE_DEFAULT);
+
+			vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+			vkCmdEndRenderPass(commandBuffers[i]);
+
+			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to record command buffer!");
+			}
+		}
 	}
 
 	void VRVulkanGraphicsToolkit::createSyncObjects() {

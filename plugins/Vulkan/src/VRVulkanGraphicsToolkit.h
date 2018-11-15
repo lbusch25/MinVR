@@ -83,14 +83,14 @@ namespace MinVR {
 		VkFormat SWAP_CHAIN_IMAGE_FORMAT_DEFAULT;
 		VkExtent2D SWAP_CHAIN_EXTENT_DEFAULT;
 		std::vector<VkImageView> SWAP_CHAIN_IMAGE_VIEWS;
-		std::vector<VkFramebuffer> swapChainFramebuffers;
+		std::vector<VkFramebuffer> SWAP_CHAIN_FRAME_BUFFERS_DEFAULT;
 
 		VkRenderPass RENDER_PASS_DEFAULT;
 		VkPipelineLayout PIPELINE_LAYOUT_DEFAULT;
 		VkPipeline GRAPHICS_PIPELINE_DEFAULT;
 
-		VkCommandPool commandPool;
-		std::vector<VkCommandBuffer> commandBuffers;
+		VkCommandPool COMMAND_POOL;
+		std::vector<VkCommandBuffer> COMMAND_BUFFERS;
 
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
