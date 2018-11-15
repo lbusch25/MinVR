@@ -22,7 +22,7 @@ namespace MinVR {
 		PLUGIN_API std::string getName() const { return "VRVulkanGraphicsToolkit"; }
 
 		//Stuff needed to set up vulkan
-		PLUGIN_API void initVulkan(GLFWwindow* window);
+		PLUGIN_API void initVulkan(GLFWwindow* window, std::string& vertShader, std::string& fragShader);
 		PLUGIN_API void cleanUpVulkan();
 		PLUGIN_API void recreateSwapChain();
 
@@ -32,6 +32,8 @@ namespace MinVR {
 		PLUGIN_API void finishGraphics();
 
 		PLUGIN_API static VRGraphicsToolkit* create(VRMainInterface *vrMain, VRDataIndex *config, const std::string &nameSpace);
+
+		PLUGIN_API static std::vector<char> readFile(const std::string& filename);
 
 		const std::vector<const char*> validationLayers = {
 			"VK_LAYER_LUNARG_standard_validation"
@@ -83,9 +85,9 @@ namespace MinVR {
 		std::vector<VkImageView> SWAP_CHAIN_IMAGE_VIEWS;
 		std::vector<VkFramebuffer> swapChainFramebuffers;
 
-		VkRenderPass renderPass;
-		VkPipelineLayout pipelineLayout;
-		VkPipeline graphicsPipeline;
+		VkRenderPass RENDER_PASS_DEFAULT;
+		VkPipelineLayout PIPELINE_LAYOUT_DEFAULT;
+		VkPipeline GRAPHICS_PIPELINE_DEFAULT;
 
 		VkCommandPool commandPool;
 		std::vector<VkCommandBuffer> commandBuffers;
@@ -107,7 +109,7 @@ namespace MinVR {
 		void createSwapChain();
 		void createImageViews();
 		void createRenderPass();
-		void createGraphicsPipeline();
+		void createGraphicsPipeline(std::string& vertShader, std::string& fragShader);
 		void createFramebuffers();
 		void createCommandPool();
 		void createCommandBuffers();
@@ -136,6 +138,8 @@ namespace MinVR {
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height);
+
+		VkShaderModule createShaderModule(const std::vector<char>& code);
 
 		void setWindowWidth(VRInt width);
 		void setWindwoHeight(VRInt height);
