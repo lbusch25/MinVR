@@ -1,8 +1,5 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
+//Written by Lawson Busch
 #include "VRVulkanGraphicsToolkit.h"
-#include <algorithm>
 
 namespace MinVR {
 
@@ -486,16 +483,16 @@ namespace MinVR {
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = (uint32_t)COMMAND_BUFFERS.size();
 
-		if (vkAllocateCommandBuffers(DEVICE_DEFAULT, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+		if (vkAllocateCommandBuffers(DEVICE_DEFAULT, &allocInfo, COMMAND_BUFFERS.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate command buffers!");
 		}
 
-		for (size_t i = 0; i < commandBuffers.size(); i++) {
+		for (size_t i = 0; i < COMMAND_BUFFERS.size(); i++) {
 			VkCommandBufferBeginInfo beginInfo = {};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-			if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+			if (vkBeginCommandBuffer(COMMAND_BUFFERS[i], &beginInfo) != VK_SUCCESS) {
 				throw std::runtime_error("failed to begin recording command buffer!");
 			}
 
@@ -510,15 +507,15 @@ namespace MinVR {
 			renderPassInfo.clearValueCount = 1;
 			renderPassInfo.pClearValues = &clearColor;
 
-			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(COMMAND_BUFFERS[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, GRAPHICS_PIPELINE_DEFAULT);
+			vkCmdBindPipeline(COMMAND_BUFFERS[i], VK_PIPELINE_BIND_POINT_GRAPHICS, GRAPHICS_PIPELINE_DEFAULT);
 
-			vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+			vkCmdDraw(COMMAND_BUFFERS[i], 3, 1, 0, 0);
 
-			vkCmdEndRenderPass(commandBuffers[i]);
+			vkCmdEndRenderPass(COMMAND_BUFFERS[i]);
 
-			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+			if (vkEndCommandBuffer(COMMAND_BUFFERS[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer!");
 			}
 		}

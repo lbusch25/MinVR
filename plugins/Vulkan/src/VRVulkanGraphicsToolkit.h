@@ -1,6 +1,9 @@
 #pragma once
 #ifndef VRVULKANGRAPHICSTOOLKIT_H
 #define VRVULKANGRAPHICSTOOLKIT_H
+#define NOMINMAX
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #include <display/VRGraphicsToolkit.h>
 #include <main/VRFactory.h>
