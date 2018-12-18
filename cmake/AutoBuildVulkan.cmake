@@ -38,6 +38,6 @@ macro(AutoBuild_use_package_Vulkan YOUR_TARGET INTERFACE_PUBLIC_OR_PRIVATE)
     target_link_libraries(${YOUR_TARGET} ${INTERFACE_PUBLIC_OR_PRIVATE} Vulkan::Vulkan)
 
 	#Not sure what this does ask Bret
-	#target_compile_definitions(${YOUR_TARGET} ${INTERFACE_PUBLIC_OR_PRIVATE} -DUSE_OPENGL)
+	target_compile_definitions(${YOUR_TARGET} ${INTERFACE_PUBLIC_OR_PRIVATE} -DUSE_OPENGL)
 
 endmacro()

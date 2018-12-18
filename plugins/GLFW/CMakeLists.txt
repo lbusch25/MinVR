@@ -42,14 +42,18 @@ target_link_libraries(${PROJECT_NAME} PUBLIC MinVR)
 
 
 # Setup dependency on GLFW:
+cmake_policy(SET CMP0074 NEW)
 include(AutoBuildGLFW)
 AutoBuild_use_package_GLFW(${PROJECT_NAME} PUBLIC)
 
 
 # Setup dependency on OpenGL:
-include(AutoBuildOpenGL)
-AutoBuild_use_package_OpenGL(${PROJECT_NAME} PUBLIC)
+#include(AutoBuildOpenGL)
+#AutoBuild_use_package_OpenGL(${PROJECT_NAME} PUBLIC)
 
+# Setup dependency on Vulkan:
+include(AutoBuildVulkan)
+AutoBuild_use_package_Vulkan(${PROJECT_NAME} PUBLIC)
 
 # Setup dependency on GLEW (only needed on Windows):
 if (NOT APPLE)

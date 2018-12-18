@@ -27,7 +27,10 @@ namespace MinVR {
 		//Stuff needed to set up vulkan
 		PLUGIN_API void initVulkan(GLFWwindow* window, std::string& vertShader, std::string& fragShader);
 		PLUGIN_API void cleanUpVulkan();
-		PLUGIN_API void recreateSwapChain();
+		PLUGIN_API void recreateSwapChain(std::string& vertShader, std::string& fragShader, GLFWwindow* window);
+
+		//Call for drawing a frame, should work assuming setup runs
+		PLUGIN_API void drawFrame(std::string& vertShader, std::string& fragShader, GLFWwindow* window);
 
 		//Stuff needed by MinVR
 		PLUGIN_API void setSubWindow(VRRect rect);
@@ -37,6 +40,8 @@ namespace MinVR {
 		PLUGIN_API static VRGraphicsToolkit* create(VRMainInterface *vrMain, VRDataIndex *config, const std::string &nameSpace);
 
 		PLUGIN_API static std::vector<char> readFile(const std::string& filename);
+
+		const int MAX_FRAMES_IN_FLIGHT = 2;
 
 		const std::vector<const char*> validationLayers = {
 			"VK_LAYER_LUNARG_standard_validation"
@@ -95,12 +100,12 @@ namespace MinVR {
 		VkCommandPool COMMAND_POOL;
 		std::vector<VkCommandBuffer> COMMAND_BUFFERS;
 
-		std::vector<VkSemaphore> imageAvailableSemaphores;
-		std::vector<VkSemaphore> renderFinishedSemaphores;
-		std::vector<VkFence> inFlightFences;
-		size_t currentFrame = 0;
+		std::vector<VkSemaphore> IMAGE_AVAILABLE_SEMAPHORE;
+		std::vector<VkSemaphore> RENDER_FINISHED_SEMAPHORE;
+		std::vector<VkFence> IN_FLIGHT_FENCES;
+		size_t CURRENT_FRAME = 0;
 
-		bool framebufferResized = false;
+		bool FRAME_BUFFER_RESIZED = false;
 
 		// init stuff
 		void createInstance();
@@ -109,7 +114,7 @@ namespace MinVR {
 		void pickPhysicalDevice();
 		void createLogicalDevice();
 		// swap chain stuff
-		void createSwapChain();
+		void createSwapChain(GLFWwindow* window);
 		void createImageViews();
 		void createRenderPass();
 		void createGraphicsPipeline(std::string& vertShader, std::string& fragShader);
@@ -140,7 +145,7 @@ namespace MinVR {
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
-		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height);
+		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height, GLFWwindow* window);
 
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 

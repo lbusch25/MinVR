@@ -40,7 +40,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC MinVR)
 
 
-# Setup dependency on OpenGL:
+# Setup dependency on Vulkan:
 include(AutoBuildVulkan)
 AutoBuild_use_package_Vulkan(${PROJECT_NAME} PUBLIC)
 

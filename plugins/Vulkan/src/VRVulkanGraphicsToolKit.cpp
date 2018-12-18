@@ -61,7 +61,7 @@ namespace MinVR {
 		createSurface(window);
 		pickPhysicalDevice();
 		createLogicalDevice();
-		createSwapChain();
+		createSwapChain(window);
 		createImageViews();
 		createRenderPass();
 		createGraphicsPipeline(vertShader, fragShader);
@@ -72,6 +72,16 @@ namespace MinVR {
 	}
 
 	void VRVulkanGraphicsToolkit::cleanUpVulkan() {
+		cleanUpSwapChain();
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			vkDestroySemaphore(DEVICE_DEFAULT, RENDER_FINISHED_SEMAPHORE[i], nullptr);
+			vkDestroySemaphore(DEVICE_DEFAULT, IMAGE_AVAILABLE_SEMAPHORE[i], nullptr);
+			vkDestroyFence(DEVICE_DEFAULT, IN_FLIGHT_FENCES[i], nullptr);
+		}
+
+		vkDestroyCommandPool(DEVICE_DEFAULT, COMMAND_POOL, nullptr);
+
 		for (auto framebuffer : SWAP_CHAIN_FRAME_BUFFERS_DEFAULT) {
 			vkDestroyFramebuffer(DEVICE_DEFAULT, framebuffer, nullptr);
 		}
@@ -93,10 +103,28 @@ namespace MinVR {
 
 		vkDestroySurfaceKHR(INSTANCE_DEFAULT, SURFACE_DEFAULT, nullptr);
 		vkDestroyInstance(INSTANCE_DEFAULT, nullptr);
+
+		//END WINDOW STUFF NEEDED? I DONT THINK SO CAUSE OF HOW WINDOWS OPERATE IN MINVR
 	}
 
-	void VRVulkanGraphicsToolkit::recreateSwapChain() {
+	void VRVulkanGraphicsToolkit::recreateSwapChain(std::string& vertShader, std::string& fragShader, GLFWwindow* window) {
+		//Handles window minimization
+		int width = 0, height = 0;
+		while (width == 0 || height == 0) {
+			glfwGetFramebufferSize(window, &width, &height);
+			glfwWaitEvents();
+		}
 
+		vkDeviceWaitIdle(DEVICE_DEFAULT);
+
+		cleanUpSwapChain();
+
+		createSwapChain(window);
+		createImageViews();
+		createRenderPass();
+		createGraphicsPipeline(vertShader, fragShader);
+		createFramebuffers();
+		createCommandBuffers();
 	}
 
 	/*
@@ -213,13 +241,13 @@ namespace MinVR {
 
 	}
 
-	void VRVulkanGraphicsToolkit::createSwapChain() {
+	void VRVulkanGraphicsToolkit::createSwapChain(GLFWwindow* window) {
 		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(PHYSICAL_DEVICE_DEFAULT);
 
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
 		//USING SETTERS FOR WIDTH/HEIGHT, ASK BRET
-		VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, WIDTH, HEIGHT);		//COME BACK HERE
+		VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, WIDTH, HEIGHT, window);		//COME BACK HERE
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -313,12 +341,22 @@ namespace MinVR {
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorAttachmentRef;
 
+		VkSubpassDependency dependency = {};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = 1;
 		renderPassInfo.pAttachments = &colorAttachment;
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = 1;
+		renderPassInfo.pDependencies = &dependency;
 
 		if (vkCreateRenderPass(DEVICE_DEFAULT, &renderPassInfo, nullptr, &RENDER_PASS_DEFAULT) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
@@ -507,6 +545,8 @@ namespace MinVR {
 			renderPassInfo.clearValueCount = 1;
 			renderPassInfo.pClearValues = &clearColor;
 
+			//DRAWING THE STUFF
+
 			vkCmdBeginRenderPass(COMMAND_BUFFERS[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			vkCmdBindPipeline(COMMAND_BUFFERS[i], VK_PIPELINE_BIND_POINT_GRAPHICS, GRAPHICS_PIPELINE_DEFAULT);
@@ -515,6 +555,8 @@ namespace MinVR {
 
 			vkCmdEndRenderPass(COMMAND_BUFFERS[i]);
 
+			//END DRAWINGS
+
 			if (vkEndCommandBuffer(COMMAND_BUFFERS[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer!");
 			}
@@ -522,11 +564,103 @@ namespace MinVR {
 	}
 
 	void VRVulkanGraphicsToolkit::createSyncObjects() {
+		IMAGE_AVAILABLE_SEMAPHORE.resize(MAX_FRAMES_IN_FLIGHT);
+		IMAGE_AVAILABLE_SEMAPHORE.resize(MAX_FRAMES_IN_FLIGHT);
+		IN_FLIGHT_FENCES.resize(MAX_FRAMES_IN_FLIGHT);
 
+		VkSemaphoreCreateInfo semaphoreInfo = {};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+		VkFenceCreateInfo fenceInfo = {};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			if (vkCreateSemaphore(DEVICE_DEFAULT, &semaphoreInfo, nullptr, &IMAGE_AVAILABLE_SEMAPHORE[i]) != VK_SUCCESS ||
+				vkCreateSemaphore(DEVICE_DEFAULT, &semaphoreInfo, nullptr, &IMAGE_AVAILABLE_SEMAPHORE[i]) != VK_SUCCESS ||
+				vkCreateFence(DEVICE_DEFAULT, &fenceInfo, nullptr, &IN_FLIGHT_FENCES[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create synchronization objects for a frame!");
+			}
+		}
 	}
 
 	void VRVulkanGraphicsToolkit::cleanUpSwapChain() {
+		for (auto framebuffer : SWAP_CHAIN_FRAME_BUFFERS_DEFAULT) {
+			vkDestroyFramebuffer(DEVICE_DEFAULT, framebuffer, nullptr);
+		}
 
+		vkFreeCommandBuffers(DEVICE_DEFAULT, COMMAND_POOL, static_cast<uint32_t>(COMMAND_BUFFERS.size()), COMMAND_BUFFERS.data());
+
+		vkDestroyPipeline(DEVICE_DEFAULT, GRAPHICS_PIPELINE_DEFAULT, nullptr);
+		vkDestroyPipelineLayout(DEVICE_DEFAULT, PIPELINE_LAYOUT_DEFAULT, nullptr);
+		vkDestroyRenderPass(DEVICE_DEFAULT, RENDER_PASS_DEFAULT, nullptr);
+
+		for (auto imageView : SWAP_CHAIN_IMAGE_VIEWS) {
+			vkDestroyImageView(DEVICE_DEFAULT, imageView, nullptr);
+		}
+
+		vkDestroySwapchainKHR(DEVICE_DEFAULT, SWAP_CHAIN_DEFAULT, nullptr);
+	}
+
+	void VRVulkanGraphicsToolkit::drawFrame(std::string& vertShader, std::string& fragShader, GLFWwindow* window) {
+		vkWaitForFences(DEVICE_DEFAULT, 1, &IN_FLIGHT_FENCES[CURRENT_FRAME], VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+		uint32_t imageIndex;
+		VkResult result = vkAcquireNextImageKHR(DEVICE_DEFAULT, SWAP_CHAIN_DEFAULT, std::numeric_limits<uint64_t>::max(), IMAGE_AVAILABLE_SEMAPHORE[CURRENT_FRAME], VK_NULL_HANDLE, &imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			recreateSwapChain(vertShader, fragShader, window);
+			return;
+		}
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+			throw std::runtime_error("failed to acquire swap chain image!");
+		}
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkSemaphore waitSemaphores[] = { IMAGE_AVAILABLE_SEMAPHORE[CURRENT_FRAME] };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &COMMAND_BUFFERS[imageIndex];
+
+		VkSemaphore signalSemaphores[] = { RENDER_FINISHED_SEMAPHORE[CURRENT_FRAME] };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		vkResetFences(DEVICE_DEFAULT, 1, &IN_FLIGHT_FENCES[CURRENT_FRAME]);
+
+		if (vkQueueSubmit(GRAPHICS_QUEUE_DEFAULT, 1, &submitInfo, IN_FLIGHT_FENCES[CURRENT_FRAME]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to submit draw command buffer!");
+		}
+
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
+
+		VkSwapchainKHR swapChains[] = { SWAP_CHAIN_DEFAULT };
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = swapChains;
+
+		presentInfo.pImageIndices = &imageIndex;
+
+		result = vkQueuePresentKHR(PRESENT_QUEUE_DEFAULT, &presentInfo);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || FRAME_BUFFER_RESIZED) {
+			FRAME_BUFFER_RESIZED = false;
+			recreateSwapChain(vertShader, fragShader, window);
+		}
+		else if (result != VK_SUCCESS) {
+			throw std::runtime_error("failed to present swap chain image!");
+		}
+
+		CURRENT_FRAME = (CURRENT_FRAME + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 	/*
@@ -722,12 +856,18 @@ namespace MinVR {
 		return bestMode;
 	}
 
-	VkExtent2D VRVulkanGraphicsToolkit::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height) {
+	VkExtent2D VRVulkanGraphicsToolkit::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VRInt width, VRInt height, GLFWwindow* window) {
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 			return capabilities.currentExtent;
 		}
 		else {
-			VkExtent2D actualExtent = { width, height };
+			int width, height;
+			glfwGetFramebufferSize(window, &width, &height);
+
+			VkExtent2D actualExtent = {
+				static_cast<uint32_t>(width),
+				static_cast<uint32_t>(height)
+			};
 
 			actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 			actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
